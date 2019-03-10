@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/mozillazg/request"
+	"github.com/gagliardetto/request"
 )
 
 func httpProxy(URL string) {

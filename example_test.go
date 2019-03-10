@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mozillazg/request"
+	"github.com/gagliardetto/request"
 )
 
 func ExampleRequest_Get() {

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/mozillazg/request",
+	"ImportPath": "github.com/gagliardetto/request",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
 	"Deps": [
