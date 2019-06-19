@@ -55,6 +55,25 @@ func (resp *Response) Content() (b []byte, err error) {
 	return b, err
 }
 
+// Reader returns a decompreseing reader
+func (resp *Response) Reader() (reader io.ReadCloser, err error) {
+
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		if reader, err = gzip.NewReader(resp.Body); err != nil {
+			return nil, err
+		}
+	case "deflate":
+		if reader, err = zlib.NewReader(resp.Body); err != nil {
+			return nil, err
+		}
+	default:
+		reader = resp.Body
+	}
+
+	return reader, err
+}
+
 // Text return Response Body as string
 func (resp *Response) Text() (string, error) {
 	b, err := resp.Content()
