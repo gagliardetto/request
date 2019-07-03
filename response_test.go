@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResponseURLNormal(t *testing.T) {
@@ -43,7 +43,7 @@ func TestResponseGzip(t *testing.T) {
 	resp, _ := req.Get(url)
 	d, _ := resp.Json()
 	t2, _ := resp.Text()
-	c2, _ := resp.Content()
+	c2, _ := resp.DecompressedContent()
 	defer resp.Body.Close()
 
 	assert.Equal(t, resp.Reason() != "", true)
@@ -60,7 +60,7 @@ func TestResponseDeflate(t *testing.T) {
 	resp, _ := req.Get(url)
 	d, _ := resp.Json()
 	t2, _ := resp.Text()
-	c2, _ := resp.Content()
+	c2, _ := resp.DecompressedContent()
 	defer resp.Body.Close()
 
 	assert.Equal(t, resp.Reason() != "", true)

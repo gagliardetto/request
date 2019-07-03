@@ -9,7 +9,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 type hookNothing struct {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 )
 

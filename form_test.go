@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPost(t *testing.T) {

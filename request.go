@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -42,6 +43,7 @@ type Args struct {
 	BasicAuth BasicAuth
 	Body      io.Reader
 	Hooks     []Hook
+	Context   context.Context
 }
 
 // Request is alias Args
@@ -86,6 +88,12 @@ func NewRequest(c *http.Client) *Request {
 	return &Request{NewArgs(c)}
 }
 
+// NewRequest return a *Request
+func NewRequestWithContext(c *http.Client, ctx context.Context) *Request {
+	req := NewRequest(c)
+	req.Args.Context = ctx
+	return req
+}
 func newURL(u string, params map[string]string) string {
 	if params == nil {
 		return u
@@ -142,6 +150,9 @@ func buildHTTPRequest(method string, url string, a *Args) (req *http.Request, er
 	}
 	applyCheckRdirect(a)
 
+	if a.Context != nil {
+		req = req.WithContext(a.Context)
+	}
 	if a.BasicAuth.Username != "" {
 		req.SetBasicAuth(a.BasicAuth.Username, a.BasicAuth.Password)
 	}

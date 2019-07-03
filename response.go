@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/bitly/go-simplejson"
 )
@@ -19,31 +20,23 @@ type Response struct {
 
 // Json return Response Body as simplejson.Json
 func (resp *Response) Json() (*simplejson.Json, error) {
-	b, err := resp.Content()
+	b, err := resp.DecompressedContent()
 	if err != nil {
 		return nil, err
 	}
 	return simplejson.NewJson(b)
 }
 
-// Content return Response Body as []byte
-func (resp *Response) Content() (b []byte, err error) {
+// DecompressedContent return Response Body as []byte,
+// opportunely decompressed.
+func (resp *Response) DecompressedContent() (b []byte, err error) {
 	if resp.content != nil {
 		return resp.content, nil
 	}
 
-	var reader io.ReadCloser
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
-		if reader, err = gzip.NewReader(resp.Body); err != nil {
-			return nil, err
-		}
-	case "deflate":
-		if reader, err = zlib.NewReader(resp.Body); err != nil {
-			return nil, err
-		}
-	default:
-		reader = resp.Body
+	reader, err := resp.DecompressedReader()
+	if err != nil {
+		return nil, err
 	}
 
 	defer reader.Close()
@@ -55,8 +48,22 @@ func (resp *Response) Content() (b []byte, err error) {
 	return b, err
 }
 
-// Reader returns a decompreseing reader
-func (resp *Response) Reader() (reader io.ReadCloser, err error) {
+// IsGzipped tells whether the contee has gzip encoding.
+func (resp *Response) IsGzipped() bool {
+	contentEncoding := resp.Header.Get("Content-Encoding")
+	contentEncoding = strings.TrimSpace(strings.ToLower(contentEncoding))
+	return contentEncoding == "gzip"
+}
+
+// ReadAllRawBody is a shortcut for ioutil.ReadAll(resp.Body) that also closes the body.
+func (resp *Response) ReadAllRawBody() ([]byte, error) {
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+// DecompressedReader returns a decompressing reader (if the content encoding is gzip or deflate);
+// otherwise, it simply returns resp.Body
+func (resp *Response) DecompressedReader() (reader io.ReadCloser, err error) {
 
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
@@ -76,7 +83,7 @@ func (resp *Response) Reader() (reader io.ReadCloser, err error) {
 
 // Text return Response Body as string
 func (resp *Response) Text() (string, error) {
-	b, err := resp.Content()
+	b, err := resp.DecompressedContent()
 	s := string(b)
 	return s, err
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGet(t *testing.T) {
@@ -29,7 +29,7 @@ func TestGet(t *testing.T) {
 	resp, _ = req.Get(url)
 	d, _ := resp.Json()
 	t2, _ := resp.Text()
-	c2, _ := resp.Content()
+	c2, _ := resp.DecompressedContent()
 	defer resp.Body.Close()
 
 	assert.Equal(t, resp.Reason() != "", true)
@@ -90,7 +90,7 @@ func TestHead(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, resp.Ok(), true)
-	content, _ := resp.Content()
+	content, _ := resp.DecompressedContent()
 	assert.Equal(t, content, []byte{})
 }
 

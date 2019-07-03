@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHeaders(t *testing.T) {
