@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/bitly/go-simplejson"
 )
@@ -61,11 +62,67 @@ func (resp *Response) ReadAllRawBody() ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
+var gzipReaderSyncPool *sync.Pool
+
+func init() {
+	gzipReaderSyncPool = &sync.Pool{}
+}
+func getGzipReader(src io.Reader) (reader io.ReadCloser, closer func(), err error) {
+	var gzipReader *gzip.Reader
+	if r := gzipReaderSyncPool.Get(); r != nil {
+		gzipReader = r.(*gzip.Reader)
+		err := gzipReader.Reset(src)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		gzipReader, err = gzip.NewReader(src)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	closer = func() {
+		gzipReader.Close()
+		gzipReaderSyncPool.Put(gzipReader)
+	}
+
+	return gzipReader, closer, nil
+}
+
+// DecompressedReaderFromPool returns a decompressing reader (if the content encoding is gzip or deflate);
+// otherwise, it simply returns resp.Body;
+// gzip readers are sourced from a pool.
+func (resp *Response) DecompressedReaderFromPool() (reader io.ReadCloser, closer func(), err error) {
+
+	switch strings.ToLower(strings.TrimSpace(resp.Header.Get("Content-Encoding"))) {
+	case "gzip":
+		reader, closer, err = getGzipReader(resp.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+	case "deflate":
+		if reader, err = zlib.NewReader(resp.Body); err != nil {
+			return nil, nil, err
+		}
+		closer = func() {
+			reader.Close()
+		}
+	default:
+		reader = resp.Body
+		closer = func() {
+			reader.Close()
+		}
+	}
+
+	return reader, closer, err
+}
+
 // DecompressedReader returns a decompressing reader (if the content encoding is gzip or deflate);
 // otherwise, it simply returns resp.Body
 func (resp *Response) DecompressedReader() (reader io.ReadCloser, err error) {
 
-	switch resp.Header.Get("Content-Encoding") {
+	switch strings.ToLower(strings.TrimSpace(resp.Header.Get("Content-Encoding"))) {
 	case "gzip":
 		if reader, err = gzip.NewReader(resp.Body); err != nil {
 			return nil, err
